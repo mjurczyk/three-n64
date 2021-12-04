@@ -21,6 +21,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Ionic App" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/rivets/0.9.6/rivets.bundled.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
 
     <style>
       * {
@@ -34,5 +43,19 @@
   <body>
     <div id="root"></div>
   </body>
+
+  <div id="canvasDiv" style="display: none;">
+      <canvas id="canvas" style="width: 640px;"></canvas>
+  </div>
+  
+  <script src="%PUBLIC_URL%/n64/input_controller.js"></script>
+  <script src="%PUBLIC_URL%/n64/settings.js"></script>
+  <script src="%PUBLIC_URL%/n64/romlist.js"></script>
+  <script type="text/javascript">
+      var rando = Math.floor(Math.random() * Math.floor(100000));
+      var script = document.createElement('script');
+      script.src = '%PUBLIC_URL%/n64/script.js?v=' + rando;
+      document.getElementsByTagName('head')[0].appendChild(script);
+  </script>
 
 </html>
