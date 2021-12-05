@@ -26,5 +26,3 @@ yarn-error.log*
 
 # Optional eslint cache
 .eslintcache
-
-src/game-views/n64/games/
