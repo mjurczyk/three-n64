@@ -81,7 +81,6 @@ class MyClass {
         
 
         this.setupDragDropRom();
-        this.detectMobile();
         this.setupLogin();
         this.setupInputController();
         this.createDB();
@@ -136,22 +135,7 @@ class MyClass {
         }
     }
 
-    detectMobile(){
-        if (window.innerWidth < 600 || navigator.userAgent.toLocaleLowerCase().includes('iphone') ||
-        navigator.userAgent.toLocaleLowerCase().includes('ipad') )
-            this.mobileMode = true;
-        else
-            this.mobileMode = false;
-    }
-
     async LoadEmulator(byteArray){
-        if (this.rom_name.toLocaleLowerCase().endsWith('.zip'))
-        {
-            this.rivetsData.lblError = 'Zip format not supported. Please uncompress first.'
-            this.rivetsData.beforeEmulatorStarted = false;
-        }
-        else
-        {
             FS.writeFile('custom.v64',byteArray);
             this.WriteConfigFile();
             $('#canvasDiv').show();
@@ -161,8 +145,9 @@ class MyClass {
             this.initAudio();
             this.rivetsData.beforeEmulatorStarted = false;
             this.showToast = Module.cwrap('neil_toast_message', null, ['string']);
-        }
 
+            // NOTE Prevent double-rendering, causes frame skipping
+            Module['canvas'].parentNode.removeChild(Module['canvas']);
     }
 
     async initAudio() {
@@ -414,20 +399,23 @@ class MyClass {
         reader.readAsArrayBuffer(file);
     }
 
-    uploadRom(event) {
-        var file = event.currentTarget.files[0];
-        myClass.rom_name = file.name;
-        console.log(file);
-        var reader = new FileReader();
-        reader.onprogress = function (e) {
-            console.log('loaded: ' + e.loaded);
-        };
-        reader.onload = function (e) {
-            console.log('finished loading');
-            var byteArray = new Uint8Array(this.result);
-            myClass.LoadEmulator(byteArray);
+    uploadRom(file) {
+        let array = new Uint8Array(file.length);
+        for (let i = 0; i < file.length; i++) {
+            array[i] = file.charCodeAt(i);
         }
-        reader.readAsArrayBuffer(file);
+
+        myClass.LoadEmulator(array);
+        // var reader = new FileReader();
+        // reader.onprogress = function (e) {
+        //     console.log('loaded: ' + e.loaded);
+        // };
+        // reader.onload = function (e) {
+        //     console.log('finished loading');
+        //     var byteArray = new Uint8Array(this.result);
+        //     myClass.LoadEmulator(byteArray);
+        // }
+        // reader.readAsArrayBuffer(file);
     }
 
     resizeCanvas() {

@@ -1,10 +1,6 @@
 import * as Three from 'three';
 import GameboyRoomModel from '../assets/models/gameboy-room.glb';
-import envMapLight from '../assets/hdri/env-map-light.hdr';
 import envMapReflections from '../assets/hdri/reflection.jpg';
-
-// GameBoy Online (https://github.com/taisel/GameBoy-Online)
-import { initGameboy } from './gameboy/GameBoyIO';
 
 import {
   ViewClass,
@@ -15,20 +11,13 @@ import {
   RenderService,
   TimeService,
   UtilsService,
-  MathService,
-  VarService,
-  InputService,
-  AnimationService,
-  MathUtils,
-  mathPi2,
+  MathService
 } from 'three-default-cube';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton';
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 /* eslint-disable */
-import romHarryPotterGBC from '!!binary-loader!./gameboy/games/harry-potter';
-import romZeldaN64 from '!!binary-loader!./n64/games/zelda-n64';
+import romN64 from '!!binary-loader!./n64/games/rom';
 
 export class GameboyRoomView extends ViewClass {
   onCreate() {
@@ -158,70 +147,6 @@ export class GameboyRoomView extends ViewClass {
 
     registerVRRaycasting([ controller1, controller2 ]);
 
-    const {
-      start: startGameboy,
-      gameBoyKeyDown,
-      gameBoyKeyUp,
-    } = initGameboy();
-
-    const screenCanvas = document.createElement('canvas');
-    screenCanvas.width = 160;
-    screenCanvas.height = 144;
-    const screenContext = screenCanvas.getContext('2d');
-    screenContext.fillStyle = '#110011';
-    screenContext.fillRect(0, 0, 160, 144);
-
-    const screenTexture = new Three.CanvasTexture(screenCanvas);
-    screenTexture.minFilter = Three.NearestFilter;
-    screenTexture.magFilter = Three.NearestFilter;
-
-    const tiltBox = new Three.Group();
-    const tilt = {
-      x: 0.0,
-      y: 0.0,
-    };
-
-    const selectGame = (then) => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.addEventListener('change', function () {
-        if (typeof this.files === 'undefined' || !this.files.length) {
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function () {
-          if (this.readyState === 2) {
-            then(this.result);
-          }
-        };
-        reader.readAsBinaryString(this.files[this.files.length - 1]);
-      });
-      input.click();
-    };
-
-    const createClickableButton = (button, key, callback) => {
-      let enabled = false;
-
-      TimeService.registerFrameListener(() => {
-        const keyValue = InputService.keys[key];
-
-        if (keyValue) {
-          if (!enabled) {
-            enabled = true;
-            callback(true);
-          }
-        } else {
-          if (enabled) {
-            enabled = false;
-            callback(false);
-          }
-        }
-
-        button.position.x = Three.MathUtils.lerp(button.position.x, keyValue ? -0.09 : 0.0, 0.4);
-      });
-    };
-
     new Preloader({
       requireAssets: [
         AssetsService.getModel(GameboyRoomModel)
@@ -232,6 +157,7 @@ export class GameboyRoomView extends ViewClass {
         RenderService.getScene().background = new Three.Color(0x010101);
 
         AssetsService.getImage(envMapReflections).then(texture => {
+          // NOTE Move to DefaultCube
           const renderer = RenderService.getRenderer();
           const generator = new Three.PMREMGenerator(renderer);
           const renderTarget = generator.fromEquirectangular(texture);
@@ -249,10 +175,11 @@ export class GameboyRoomView extends ViewClass {
         SceneService.parseScene({
           target: worldModel,
           gameObjects: {
-            cartridgePreview: (object) => {
-              cartridgePreview = object;
-            },
             screen: (object) => {
+              const screenTexture = new Three.CanvasTexture(document.querySelector('#canvas'));
+              screenTexture.minFilter = Three.NearestFilter;
+              screenTexture.magFilter = Three.NearestFilter;
+
               object.traverse(child => {
                 if (child.material) {
                   child.material = new Three.MeshBasicMaterial({
@@ -279,123 +206,22 @@ export class GameboyRoomView extends ViewClass {
                 }
               });
             },
-            powerLight: (object) => {
-              const originalMaterial = AssetsService.cloneMaterial(object.material);
-              const enabledMaterial = new Three.MeshBasicMaterial({
-                color: 0xff0000
-              });
-
-              VarService.getVar('powerOn', (value) => {
-                if (value) {
-                  object.material = enabledMaterial;
-                } else {
-                  object.material = originalMaterial;
-                }
-              });
-            },
-            ctrlDPad: (object) => {
-              TimeService.registerFrameListener(() => {
-                const keyW = InputService.keys['w'];
-                const keyS = InputService.keys['s'];
-                const keyA = InputService.keys['a'];
-                const keyD = InputService.keys['d'];
-
-                let angleY = 0.0;
-                let angleZ = 0.0;
-
-                if (keyW) {
-                  angleY = MathUtils.degToRad(-9.0);
-                } else if (keyS) {
-                  angleY = MathUtils.degToRad(9.0);
-                } else {
-                  angleY = 0.0;
-                }
-
-                if (keyA) {
-                  angleZ = MathUtils.degToRad(9.0);
-                } else if (keyD) {
-                  angleZ = MathUtils.degToRad(-9.0);
-                } else {
-                  angleZ = 0.0;
-                }
-
-                keyW ? gameBoyKeyDown('up') : gameBoyKeyUp('up');
-                keyS ? gameBoyKeyDown('down') : gameBoyKeyUp('down');
-                keyA ? gameBoyKeyDown('left') : gameBoyKeyUp('left');
-                keyD ? gameBoyKeyDown('right') : gameBoyKeyUp('right');
-
-                object.rotation.z = Three.MathUtils.lerp(object.rotation.z, -mathPi2 + angleY, 0.2);
-                object.rotation.y = Three.MathUtils.lerp(object.rotation.y, angleZ, 0.2);
-              });
-            },
-            ctrlA: (object) => {
-              createClickableButton(object, 'k', (status) => {
-                const key = 'b';
-
-                if (status) {
-                  gameBoyKeyDown(key);
-                } else {
-                  gameBoyKeyUp(key);
-                }
-              });
-            },
-            ctrlB: (object) => {
-              createClickableButton(object, 'o', (status) => {
-                const key = 'a';
-
-                if (status) {
-                  gameBoyKeyDown(key);
-                } else {
-                  gameBoyKeyUp(key);
-                }
-              });
-            },
-            ctrlStart: (object) => {
-              createClickableButton(object, 'c', (status) => {
-                const key = 'start';
-
-                if (status) {
-                  gameBoyKeyDown(key);
-                } else {
-                  gameBoyKeyUp(key);
-                }
-              });
-            },
-            ctrlSelect: (object) => {
-              createClickableButton(object, 'v', (status) => {
-                const key = 'select';
-
-                if (status) {
-                  gameBoyKeyDown(key);
-                } else {
-                  gameBoyKeyUp(key);
-                }
-              });
-            },
           },
           actions: {
-            cartridge: (target) => {
-              const { userData } = target;
-
-              selectedRom = userData.propRom;
-
-              if (userData.propRom === 'local') {
-                selectGame((game) => {
-                  startGame(game);
-                });
-              } else {
-                startGame();
-              }
-            },
-            uploadRom: () => {
-              alert('upload');
-            }
+            
           },
           onCreate: () => {
-            CameraService.detachCamera();
+            if (RenderService.getRenderer().xr.enabled) {
+              CameraService.detachCamera();
+            } else {
+              CameraService.useCamera(CameraService.getCamera('noVR'));
+  
+              setTimeout(() => {
+                CameraService.detachCamera();
+              }, 3000);
+            }
 
             scene.add(worldModel);
-            scene.add(tiltBox);
 
             scene.traverse(child => {
               if (child.userData.vrPickable) {
@@ -414,36 +240,7 @@ export class GameboyRoomView extends ViewClass {
               }
             });
 
-            // startGameboy(screenCanvas, romHarryPotterGBC);
-            // startN64(screenCanvas, romZeldaN64);
-
-            // const tiltElements = [];
-
-            // worldModel.traverse(child => {
-            //   if (child.userData.propTilt) {
-            //     tiltElements.push(child);
-            //   }
-            // });
-
-            // tiltElements.forEach(child => tiltBox.add(child));
-
-            // TimeService.registerFrameListener(() => {
-            //   const { keys } = InputService;
-              
-            //   tilt.x = 0.0;
-            //   tilt.y = 0.0;
-              
-            //   if (keys['w']) tilt.x += 0.01;
-            //   if (keys['s']) tilt.x -= 0.01;
-
-            //   if (keys['a']) tilt.y -= 0.025;
-            //   if (keys['o']) tilt.y += 0.025;
-
-            //   if (keys['c'] || keys['v']) tilt.x -= 0.02;
-
-            //   tiltBox.rotation.z = Three.MathUtils.lerp(tiltBox.rotation.z, tilt.x, 0.05);
-            //   tiltBox.rotation.y = Three.MathUtils.lerp(tiltBox.rotation.y, tilt.y, 0.05);
-            // });
+            window["myApp"].uploadRom(romN64);
           }
         });
       }

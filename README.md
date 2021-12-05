@@ -1,17 +1,23 @@
-<p align="center">
-  <img width="340" alt="default-cube-logo-sm" src="https://user-images.githubusercontent.com/9549760/124856119-429dbc00-dfaa-11eb-9a59-d3230f81e86e.png">
-</p>
+### How to run
 
-<p align="center">
-  <a href="https://defaultcube.wtlstudio.com/intro/getting-started/">Getting Started</a>
-  |
-  <a href="https://defaultcube.wtlstudio.com/">Docs</a>
-  |
-  <a href="https://github.com/mjurczyk/three-default-cube-boilerplate">Boilerplate</a>
-  |
-  <a href="https://github.com/mrdoob/three.js">Three.js</a>
-</p>
+* Clone
 
-## Game Boilerplate
+* Add valid N64 ROM to `src/game-views/n64/games` (Same directory as a markdown file `PUT-DOM-HERE.md`)
 
-See [https://github.com/mjurczyk/three-default-cube](https://github.com/mjurczyk/three-default-cube) for more.
+* Run: `npm i && npm start`
+
+* Open localhost:3000
+
+## How to run in VR
+
+* Do steps above
+
+* Download https://ngrok.com/
+
+* Run: `ngrok http 3000`
+
+* Use the `https` version of the ngrok tunnel to connect via Oculus Browser
+
+## Editing the environment
+
+To edit the scene, open `design/gameboy-room.blend` in Blender. Export it to `src/assets/models/gameboy-room.glb` (**NOTE:** Be sure to check "Export custom properties" in the exporter settings.)

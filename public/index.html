@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Default Cube</title>
+    <title>Three.js N64</title>
 
     <base href="/" />
 
@@ -44,8 +44,8 @@
     <div id="root"></div>
   </body>
 
-  <div id="canvasDiv" style="display: none;">
-      <canvas id="canvas" style="width: 640px;"></canvas>
+  <div id="canvasDiv" style="z-index: 1000; position: absolute; top: 0px; left: 5px;">
+      <canvas id="canvas" style="width: 32px;" width="32"></canvas>
   </div>
   
   <script src="%PUBLIC_URL%/n64/input_controller.js"></script>
